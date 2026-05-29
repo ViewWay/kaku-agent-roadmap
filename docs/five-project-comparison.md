@@ -115,46 +115,76 @@ metadata:
 Kaku 的根本差异化不是"又一个 CLI Agent"，而是**唯一将 AI 深度嵌入终端的产品**。
 出圈策略: 让终端成为 AI 的第一界面，而非 AI 的附属品。
 
-### Phase G — 并行与安全 (2-3 周)
-**目标**: 消除核心性能瓶颈，建立安全基线
+### Phase G1 — 核心性能 (W1-2)
+**目标**: 消除核心性能瓶颈，从串行进化到智能并行
 
 | 任务 | 参考来源 | 预估 LOC | 优先级 |
 |------|---------|----------|--------|
-| 工具并行执行 (只读并行 + 写入串行) | Claude Code: Streaming Tool Execution | ~300 | P0 |
-| 迭代上下文压缩 (摘要可更新 + 反抖动) | Hermes: 5阶段压缩 | ~200 | P0 |
-| 工具循环防护 (death spiral prevention) | Claude Code: withheld errors | ~150 | P0 |
-| Bash 沙箱 (网络隔离 + 路径控制) | Codex: bwrap/SandboxManager | ~500 | P1 |
+| 工具并行执行 (三级安全分级 + 只读并行) | Claude Code: Streaming Tool Execution, Hermes: 三级安全分级 | ~250 | P0 |
+| 流式工具执行 (模型输出时即开始执行) | Claude Code: Streaming Tool Execution | ~200 | P0 |
+| 迭代上下文压缩 (12段模板 + 反抖动 + 迭代更新) | Hermes: 5阶段压缩 + 12段模板 | ~350 | P0 |
+| 工具循环防护 (death spiral + 工具超时追踪) | Claude Code: withheld errors | ~120 | P0 |
+| 工具结果缓存 (LRU + 文件mtime失效) | Claude Code: cache_deleted_input_tokens | ~150 | P0 |
+| 工具结果大小控制 (per-tool + per-message 双层阈值) | Claude Code: 双层工具结果存储 | ~150 | P1 |
+| 上下文预算系统 (动态 token 预算替代固定轮次) | Hermes: IterationBudget, Claude Code: per-tool 阈值 | ~200 | P1 |
+| Prompt Cache Stability (工具排序优化缓存命中) | Claude Code: prompt cache stability | ~100 | P1 |
 
-### Phase H — 多代理与编排 (3-4 周)
-**目标**: 从单 Agent 进化到多 Agent 协作
-
-| 任务 | 参考来源 | 预估 LOC | 优先级 |
-|------|---------|----------|--------|
-| 子代理增强 (角色区分 + 深度限制 + 心跳) | Hermes: leaf/orchestrator | ~500 | P1 |
-| 子代理间通信 (channel 或文件协调) | Codex: inter-agent communication | ~300 | P1 |
-| 子代理沙箱隔离 (独立工作区 + 凭证继承) | Hermes: workspace isolation | ~400 | P1 |
-| Plan 模式增强 (结构化计划 + 验证循环) | Codex: PlanHandler + delta | ~300 | P2 |
-
-### Phase I — 生态与可扩展性 (4-5 周)
-**目标**: 建立插件生态，降低第三方集成门槛
+### Phase G2 — 安全基线 (W2-3)
+**目标**: 建立沙箱安全、权限增强、工具超时，终端感知前置
 
 | 任务 | 参考来源 | 预估 LOC | 优先级 |
 |------|---------|----------|--------|
-| Hook 系统 (Pre/Post Tool + Session 事件) | Claude Code: 28 hooks | ~600 | P1 |
-| MCP HTTP/SSE 传输 + OAuth | Hermes: MCP 增强 | ~400 | P1 |
-| Skill/Plugin 系统 (目录格式 + 前置条件) | Claude Code: Skills + Plugins | ~500 | P2 |
-| Plugin Marketplace 基础 | Claude Code official: marketplace | ~800 | P3 |
+| Bash 沙箱 (网络隔离 + 路径控制 + 环境过滤 + 资源限制) | Codex: bwrap/SandboxManager, Claude Code: sandbox | ~450 | P0 |
+| 权限增强 (glob + 三级策略 + 持久化 + 会话级) | Claude Code: 权限系统, Codex: PermissionProfile | ~250 | P0 |
+| 工具超时防护 (per-tool 可配置超时) | 所有竞品标配 | ~80 | P0 |
+| 终端上下文注入 (cwd + 命令历史 + 环境变量，前置版) | Kaku 独有, Codex: Shell Snapshot | ~200 | P0 |
 
-### Phase J — 终端独特优势 (持续)
-**目标**: 放大"终端内嵌 AI"的独特优势，建立护城河
+### Phase H — 子代理与编排 (W3-5)
+**目标**: 从单 Agent 进化到多 Agent 协作，完整生命周期
+
+| 任务 | 参考来源 | 预估 LOC | 优先级 |
+|------|---------|----------|--------|
+| 子代理角色区分 + 深度限制 + 细粒度工具控制 | Hermes: leaf/orchestrator, Claude Code: AgentDefinition | ~250 | P1 |
+| 子代理间通信 (channel + 持久化日志防丢消息) | Codex: inter-agent communication | ~250 | P1 |
+| Worktree 隔离 (Drop guard + 失败回滚 + 环境继承) | Hermes: workspace isolation, Claude Code: worktree | ~200 | P1 |
+| 子代理心跳与超时回收 | Hermes: 心跳机制, Claude Code: 孤儿进程处理 | ~150 | P0 |
+| 子代理 Transcript (独立对话记录 + 压缩 + 导出) | Claude Code: 独立 transcript | ~200 | P1 |
+| 子代理结果聚合 (排序 + 去重 + 失败标记) | 通用需求 | ~200 | P1 |
+
+### Phase I — 扩展性 (W5-7)
+**目标**: 建立可扩展架构，降低第三方集成门槛
+
+| 任务 | 参考来源 | 预估 LOC | 优先级 |
+|------|---------|----------|--------|
+| Hook 系统 (22 事件 + 5 种类型 + 条件匹配) | Claude Code: 28 hooks + 6 类型 | ~700 | P1 |
+| MCP 增强 (HTTP/SSE/WS + OAuth + 采样 + 熔断 + 命名空间 + 会话恢复) | Hermes: MCP 增强, Claude Code: MCP Elicitation | ~800 | P1 |
+| Skill 系统 (目录格式 + 条件激活 + 工具过滤 + 动态加载) | Claude Code: Skills + Plugins | ~400 | P2 |
+| LSP 工具集成 (桥接 WezTerm LSP → Agent 工具层) | Claude Code: LSP Tool | ~300 | P1 |
+| 配置管理 (分层配置 + schema 验证) | Claude Code: settings.json | ~200 | P1 |
+
+### Phase J — 终端独特优势 (W7-9)
+**目标**: 放大"终端内嵌 AI"独特优势，建立护城河
 
 | 任务 | 描述 | 预估 LOC | 优先级 |
 |------|------|----------|--------|
-| 终端会话注入 (命令历史 + 环境变量 + cwd) | 将当前 shell 状态作为 Agent 上下文 | ~200 | P0 |
-| 实时命令流监控 (Agent 可观察 shell 输出) | Agent 能"看到"终端正在发生什么 | ~400 | P1 |
-| 内联 Diff 编辑器 (在终端直接编辑 AI 提议的变更) | 结合 WezTerm 的渲染能力 | ~600 | P1 |
-| 终端上下文文件 (.terminal-context) | 自动捕获终端状态供 Agent 使用 | ~200 | P2 |
-| 多 Tab AI 协作 (不同 Tab 的 Agent 共享上下文) | 利用 WezTerm 的多 Tab 能力 | ~500 | P2 |
+| 终端会话上下文增强 (命令语义 + 进程状态 + 布局感知) | 基于 G2.3 前置版增强 | ~250 | P0 |
+| 实时命令流监控 (自适应限流 + 结构化解析) | Agent 能"看到"终端正在发生什么 | ~350 | P1 |
+| 内联 Diff 编辑器 (hunk 级操作 + 并行 diff + 统计) | 结合 WezTerm 的渲染能力 | ~500 | P1 |
+| 多 Tab AI 协作 (跨 Tab 上下文共享 + 消息总线) | Kaku 独有，所有竞品无此能力 | ~500 | P0 |
+| Agent 通知系统 (终端内通知 + 级别 + 历史队列) | 利用 WezTerm bell + 自定义通知栏 | ~200 | P1 |
+| 智能命令建议 (历史模式 + 状态感知 + Tab 接受) | Agent 基于上下文建议下一步命令 | ~300 | P2 |
+
+### Phase K — 生态进阶 (W9+)
+**目标**: 建立 Plugin 生态，编排进阶，Auto Mode
+
+| 任务 | 参考来源 | 预估 LOC | 优先级 |
+|------|---------|----------|--------|
+| Plugin 架构 (Skills + Hooks + MCP 可打包) | Claude Code: Plugin System | ~500 | P2 |
+| Auto Mode 审批分类器 (风险分级 + 学习机制) | Claude Code: Auto Mode | ~250 | P2 |
+| Plan 模式增强 (结构化步骤 + 逐条审批 + 验证循环) | Codex: PlanHandler + delta | ~300 | P2 |
+| 会话持久化 (/resume + 快照 + 自动归档) | Claude Code: /resume | ~200 | P1 |
+| Feature Flag 体系 (boolean + 灰度 + A/B) | Codex: 50+ Feature Flags | ~150 | P3 |
+| Dynamic Workflows (YAML 编排 + DAG 可视化) | Claude Code: Dynamic Workflows, Codex: CSV Jobs | ~600 | P2 |
 
 ### 出圈策略总结
 
