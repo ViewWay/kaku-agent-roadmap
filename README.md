@@ -35,6 +35,7 @@ Kaku AI Agent 引擎增强计划 — 基于 5 个顶级 AI Coding Agent 源码�
 - [Kaku 架构约束](docs/kaku-agent-constraints.md) — 当前架构瓶颈
 - [终端+Agent 工作流设计](docs/terminal-agent-design.md) — 自研终端架构、AI Agent 开发工作流交互设计
 - [多平台产品架构](docs/multiplatform-design.md) — Core/Shell/Interface 三层分离、全平台 UI、LLM 多 Provider 策略
+- [待办跟踪](TODO.md) — 37 任务 + 自研终端 + 多平台 执行进度
 
 ## 核心策略
 
