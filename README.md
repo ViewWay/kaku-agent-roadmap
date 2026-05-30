@@ -34,6 +34,7 @@ Kaku AI Agent 引擎增强计划 — 基于 5 个顶级 AI Coding Agent 源码�
 - [Hermes Agent 分析](docs/hermes-agent-analysis.md) — 核心模式和移植建议
 - [Kaku 架构约束](docs/kaku-agent-constraints.md) — 当前架构瓶颈
 - [终端+Agent 工作流设计](docs/terminal-agent-design.md) — 自研终端架构、AI Agent 开发工作流交互设计
+- [多平台产品架构](docs/multiplatform-design.md) — Core/Shell/Interface 三层分离、全平台 UI、LLM 多 Provider 策略
 
 ## 核心策略
 
@@ -52,3 +53,5 @@ Kaku 的根本差异化是唯一将 AI 深度嵌入终端的产品。
 6. **MCP 迁移到官方 RMCP SDK** — 替换自建 304 LOC 实现，获得完整协议支持 (HTTP/OAuth/Sampling)
 7. **终端方案 W9 评估** — WezTerm (2年未更新) 风险待观察，Phase J 时决策继续/迁移/自研
 8. **Warp Oz 轻量互操作** — 通过 MCP Server 标准协议对接，不深度绑定 Warp 平台
+9. **LLM 多 Provider 策略** — 不自研大模型，调用智谱/OpenAI/Anthropic/Grok/Gemini/DeepSeek/OpenRouter/本地模型
+10. **全平台自研** — Core/Shell/Interface 三层分离，Terminal/Web/Mobile/IDE/CLI 共享 Agent 引擎
