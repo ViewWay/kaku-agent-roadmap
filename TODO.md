@@ -42,7 +42,8 @@
 ## Phase I — 扩展性 (v0.15.0, W5-7)
 
 - [x] I1: Hook 系统 (~700 LOC) ✅ v0.14.0 — hooks.rs, 8事件 (计划22个, 已实现8个)
-- [ ] I2: MCP 配置与运维层 (~300 LOC) — HTTP/SSE 已实现但用 reqwest::blocking, **非 RMCP SDK**
+- [ ] I2a: 自建 MCP 增强 — OAuth 2.1 + Streamable HTTP (~200 LOC) — 短期 (v0.16.0)
+- [ ] I2b: RMCP SDK 迁移 (~430 LOC) — 中期 (Core/Shell 分离时, 待 Tier 1 合规)
 - [x] I3: Skill 系统 (~400 LOC) ✅ v0.14.0 — skills.rs, SKILL.md frontmatter
 - [ ] I4: LSP 工具集成 (~300 LOC) — 未实现 (无 lsp_tool.rs)
 - [ ] I5: 配置管理 (~200 LOC) — 部分实现 (permissions.json), 缺统一 settings.json
@@ -71,6 +72,15 @@
 - [ ] K6: Dynamic Workflows (~600 LOC) — 未开始
 
 **Phase K 完成度: 1/6 (17%)** (K3 已提前交付)
+
+## RMCP 迁移里程碑 (独立跟踪)
+
+- [ ] 短期: mcp.rs 添加 OAuth 2.1 支持 (v0.16.0)
+- [ ] 短期: mcp.rs 添加 Streamable HTTP 传输 (v0.16.0)
+- [ ] 中期: Core/Shell 分离重构引入 tokio (v0.17.0+)
+- [ ] 中期: 删除 mcp.rs + mcp_types.rs, 迁移到 RMCP SDK (v0.17.0+)
+- [ ] 中期: 双模架构验证 — Client + Server (v0.17.0+)
+- [ ] 验收: RMCP 达到 Tier 1 合规
 
 ## 自研终端 MVP (terminal-agent-design.md, ~17800 LOC)
 

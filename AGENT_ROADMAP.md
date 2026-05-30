@@ -32,18 +32,35 @@
 
 **决策节点**: Phase J 完成时 (W9)，根据产品-market fit 决定终端策略。
 
-### 决策二: MCP 模块迁移到 RMCP SDK — 立即执行
+### 决策二: MCP 模块 — 分阶段增强，Core/Shell 分离时迁移 RMCP
 
-**理由**: 自建 mcp.rs 仅 304 LOC 且仅 stdio，官方 RMCP v1.7.0 (3,468 stars) 已完整覆盖 Tools/Resources/Prompts/Sampling/OAuth/Streamable HTTP，且通过 87.5% conformance 测试。
+**当前状态 (v0.15.0)**: 自建 mcp.rs 304 LOC + mcp_types.rs ~100 LOC，使用 reqwest::blocking 实现 stdio + HTTP/SSE，无 OAuth/Sampling。
 
-**迁移范围**:
+**市场调研 (2026-05)**:
+- MCP Server 19,388 个，177,436 工具，SDK 月下载 9700 万次
+- 仅 8.5% MCP Server 使用 OAuth，52% Server 已废弃
+- RMCP v1.7.0: Server 87.5%, Client 80% 合规 (Tier 2，非 Tier 1)
+- 已知问题: reqwest 版本冲突 (#299), StreamableHTTP bug (#468)
+- 替代 SDK: prism-mcp-rs, ultrafast-mcp, rust-mcp-sdk (均需 tokio)
+
+**短期 (v0.16.0): 保持自建，补充关键能力**
+- 在 mcp.rs 添加 OAuth 2.1 支持 (参考 MCP Authorization spec)
+- 添加 Streamable HTTP 支持 (参考 MCP Transports spec 2025-11-25)
+- 理由: 仅 8.5% Server 用 OAuth，52% 已废弃，短期迁移 ROI 低
+
+**中期 (v0.17.0+): RMCP 迁移时机**
+- 触发条件: RMCP 达到 Tier 1 合规 + reqwest 冲突修复
+- 最佳窗口: Core/Shell 分离重构时 (多平台设计已规划引入 tokio)
+- 届时 tokio 桥接成本最低，避免重复引入 async 运行时
+
+**迁移范围 (中期执行)**:
 - 删除: mcp.rs (304 LOC) + mcp_types.rs (~100 LOC) = -404 LOC
 - 新增: MCP Client wrapper (~80 LOC) + MCP Server (~250 LOC) + tokio 桥接 (~100 LOC) = +430 LOC
-- 净变化: +26 LOC — 代码量不变，能力大幅提升
+- 净变化: +26 LOC
 
-**双模架构**: 迁移后 Kaku 同时作为 MCP Client (消费 21K+ 外部 Server) 和 MCP Server (暴露 34 内置工具给其他 Agent)。
+**双模架构**: 迁移后 Kaku 同时作为 MCP Client (消费 19K+ 外部 Server) 和 MCP Server (暴露 34 内置工具给其他 Agent)。
 
-**路线图影响**: H0 (集成 mcp.rs) 替换为 RMCP 迁移；I2 (MCP 增强 800 LOC) 缩减为 ~300 LOC (RMCP 已内置 HTTP/OAuth/Sampling，只需配置和熔断器)。
+**路线图影响**: I2 (MCP 增强) 拆分为短期自建增强 + 中期 RMCP 迁移。
 
 ### 决策三: Warp Oz 互操作 — 轻量优先, 分阶段
 
