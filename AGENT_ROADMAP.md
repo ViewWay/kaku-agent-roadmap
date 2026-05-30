@@ -8,6 +8,48 @@
 
 ---
 
+## 三个战略决策
+
+基于 2025-2026 市场调研 (Cursor $29B / Warp Oz / MCP 21K Server / RMCP SDK v1.7.0)，确立三个关键决策:
+
+### 决策一: 终端方案 — 短期锁定, 中期评估
+
+**现状风险**: WezTerm 超过 2 年未更新 (最后 release 2024-02-03)，作者定位为 "spare time project"。
+
+| 方案 | 短期 (Phase G-H) | 中期 (Phase J 时点) |
+|------|-----------------|-------------------|
+| 继续 WezTerm | 锁定 API 边界层，不深度绑定渲染内部 | 评估迁移到 Ghostty (45K stars, 极高活跃度) 或自研轻量终端 (crossterm/ratatui, ~5-8K LOC) |
+| 不推荐: Fork WezTerm | 15K 渲染引擎架构复杂，独自维护不可控 | — |
+
+**决策节点**: Phase J 完成时 (W9)，根据产品-market fit 决定终端策略。
+
+### 决策二: MCP 模块迁移到 RMCP SDK — 立即执行
+
+**理由**: 自建 mcp.rs 仅 304 LOC 且仅 stdio，官方 RMCP v1.7.0 (3,468 stars) 已完整覆盖 Tools/Resources/Prompts/Sampling/OAuth/Streamable HTTP，且通过 87.5% conformance 测试。
+
+**迁移范围**:
+- 删除: mcp.rs (304 LOC) + mcp_types.rs (~100 LOC) = -404 LOC
+- 新增: MCP Client wrapper (~80 LOC) + MCP Server (~250 LOC) + tokio 桥接 (~100 LOC) = +430 LOC
+- 净变化: +26 LOC — 代码量不变，能力大幅提升
+
+**双模架构**: 迁移后 Kaku 同时作为 MCP Client (消费 21K+ 外部 Server) 和 MCP Server (暴露 34 内置工具给其他 Agent)。
+
+**路线图影响**: H0 (集成 mcp.rs) 替换为 RMCP 迁移；I2 (MCP 增强 800 LOC) 缩减为 ~300 LOC (RMCP 已内置 HTTP/OAuth/Sampling，只需配置和熔断器)。
+
+### 决策三: Warp Oz 互操作 — 轻量优先, 分阶段
+
+**Oz 平台**: Warp 的云端 Agent 编排平台，HTTP REST API，支持 schedule/event/CI 触发，700K+ 开发者。
+
+| 路径 | 方式 | 依赖 | 时机 |
+|------|------|------|------|
+| **路径 A (推荐): MCP Server 对接** | Kaku 作为 MCP Server，Oz 通过标准 MCP 调用 | RMCP 迁移完成后自动具备 | Phase H (RMCP 迁移后) |
+| **路径 B: Oz CLI Agent** | 通过 `oz agent run` 提交任务到 Oz 编排器 | 需要 Oz 账号认证 | Phase K (评估 Oz 开放程度后) |
+| **不做: 深度 Oz 集成** | 注册为 Oz harness，深度绑定 Warp 平台 | 失去独立性 | — |
+
+**决策节点**: Phase K 时评估 Oz 平台开放程度，决定是否接入 Oz CLI。
+
+---
+
 ## 版本映射
 
 | 版本 | Phase | 主题 | 周期 |
@@ -212,12 +254,25 @@ enum ParallelSafety { ReadOnly, PathScoped, Writable }
 
 > 目标: 从单 Agent 进化到多 Agent 协作，建立编排基础。
 
-### H0: 集成 WIP 子代理模块 (前置)
+### H0: 集成 WIP 模块 + RMCP 迁移 (前置)
 
-集成 `subagent.rs`(243行), `tasks.rs`(261行), `worktree.rs`(97行), `mcp.rs`(304行)
+集成 `subagent.rs`(243行), `tasks.rs`(261行), `worktree.rs`(97行)。
+**不集成 mcp.rs** — 改为迁移到官方 RMCP SDK (v1.7.0)。
+
+**RMCP 迁移** (~430 LOC 新增 / 404 LOC 删除):
+- 删除: mcp.rs (304 LOC), mcp_types.rs (~100 LOC) — 自定义 JSON-RPC 实现已过时
+- 新增: `ai_tools/mcp_client.rs` (~80 LOC) — RMCP Client wrapper，支持 stdio + Streamable HTTP
+- 新增: `ai_tools/mcp_server.rs` (~250 LOC) — RMCP Server，暴露 34 内置工具给外部 Agent
+- 新增: `ai_tools/tokio_bridge.rs` (~100 LOC) — tokio runtime 桥接层 (Kaku 主架构保持 OS 线程 + mpsc)
+- Cargo.toml: 添加 `rmcp` (git dep, branch=main), `tokio` (features=["sync","macros","rt","time"])
+
+**双模架构**: 迁移后 Kaku 同时是 MCP Client (消费 21K+ 外部 Server) 和 MCP Server (暴露工具)。
+
 集成时一并设计 H1-H3 的接口，避免集成后再改。
 
-**验证**: agent_spawn, task_create, worktree_create 可调用
+参考: [RMCP Rust SDK](https://github.com/modelcontextprotocol/rust-sdk) (v1.7.0, 3,468 stars), [Building MCP Servers in Rust](https://rup12.net/posts/write-your-mcps-in-rust/)
+
+**验证**: agent_spawn/task_create/worktree_create 可调用; 通过 MCP 连接外部 Server 并调用工具; 作为 MCP Server 被外部 Client 发现和调用
 
 ### H1: 角色区分 + 深度限制 (~250 LOC)
 
@@ -348,24 +403,22 @@ struct SubagentConfig {
 
 **验证**: PreToolUse hook 拦截 `rm` 命令, SubagentStart hook 记录子代理创建
 
-### I2: MCP 增强 (~800 LOC)
+### I2: MCP 配置与运维层 (~300 LOC)
 
-**文件**: `ai_tools/mcp.rs`, `ai_tools/mcp_types.rs`, 新建 `ai_tools/mcp_oauth.rs`, `ai_tools/mcp_circuit.rs`
+> 基于 H0 的 RMCP 迁移，Streamable HTTP/OAuth/Sampling 已由 RMCP 内置。此任务聚焦配置管理和运维策略。
 
-**传输层**:
-- `McpTransport::HttpSse` — POST JSON-RPC + SSE 解析, 指数退避重连, 30s 心跳
-- `McpTransport::WebSocket` — 全双工，适合高频交互
+**文件**: 修改 `ai_tools/mcp_client.rs`, 新建 `ai_tools/mcp_config.rs`
 
-**协议层** [新增]:
-- OAuth 2.1 Step-up — 远程 MCP 服务认证 (`mcp_oauth.rs`)
-- MCP Sampling — 让 MCP 服务借用 LLM 能力 (`mcp_sampling.rs`)
-- 熔断器 — 连续 5 次失败自动断开，60s 后半开重试 (`mcp_circuit.rs`)
-- 工具命名空间 — `mcp__{server}__{tool}` 格式，避免命名冲突
-- 会话恢复 — 重连后恢复工具列表和会话状态
+**方案**:
+- MCP Server 配置管理: `.claude/mcp_servers.json` 声明式配置 (server 命令/URL/环境变量/OAuth)
+- 熔断器策略: 连续 5 次失败自动断开，60s 后半开重试
+- 工具命名空间: `mcp__{server}__{tool}` 格式，避免多 Server 命名冲突
+- 会话恢复: 重连后恢复工具列表和会话状态
+- 集成 Smithery/mcp.so: 支持 `npx @smithery/cli add <name>` 一键安装社区 MCP Server
 
-参考: Hermes MCP 增强 (HTTP/SSE + OAuth 2.1 + 采样 + 熔断), Claude Code MCP Elicitation
+参考: RMCP 内置 Streamable HTTP + OAuth 2.1 + Sampling; Hermes 熔断器策略
 
-**验证**: HTTP/SSE MCP server 连接, 调用工具, 断线重连后状态恢复
+**验证**: HTTP/SSE MCP server 连接, 调用工具, 断线重连后状态恢复, 一键安装社区 MCP Server
 
 ### I3: Skill 系统 (~400 LOC)
 
@@ -425,6 +478,7 @@ paths: ["src/**/*.rs"]
 ## v0.16.0 — 终端独特优势 (Phase J, W7-9)
 
 > 目标: 放大"终端内嵌 AI"独特优势，建立竞品无法复制的护城河。
+> **决策节点 (W9)**: Phase J 完成时评估终端方案 — 继续 WezTerm / 迁移 Ghostty (45K stars) / 自研轻量终端。
 
 ### J1: 终端会话上下文注入 (增强版) (~250 LOC)
 
@@ -602,13 +656,13 @@ G1.0 ── G1.1 ── G1.2 ── G1.3 ── G1.4
 G1.1+G1.4 ── G2.0 ── G2.1 ── G2.2
                            │
                            └── G2.3(终端上下文前置)
-G2 ─────────────── H0 ── H1 ── H2
-                       ├── H3
-                       ├── H4
-                       ├── H5
-                       └── H6
-H ─────────────── I1 ── I2 ── I3
-              ├── I4         └── I5
+G2 ─────────────── H0(RMCP迁移) ── H1 ── H2
+                                    ├── H3
+                                    ├── H4
+                                    ├── H5
+                                    └── H6
+H+RMCP ────────── I1 ── I2(配置层) ── I3
+              ├── I4              └── I5
               └── I5
 I ─────────────── J1 ── J2 ── J3
               ├── J4
@@ -628,11 +682,11 @@ J ─────────────── K1 ── K2 ── K3
 |------|-------|------|-----|------|
 | 0.12.0 | G1 | 9 (G1.0-G1.8) | ~1320 | W1-2 |
 | 0.13.0 | G2 | 4 (G2.0-G2.3) | ~980 | W2-3 |
-| 0.14.0 | H | 7 (H0-H6) | ~1450 | W3-5 |
-| 0.15.0 | I | 5 (I1-I5) | ~2400 | W5-7 |
+| 0.14.0 | H | 7 (H0-H6) | ~1880 | W3-5 |
+| 0.15.0 | I | 5 (I1-I5) | ~1900 | W5-7 |
 | 0.16.0 | J | 6 (J1-J6) | ~2100 | W7-9 |
 | 0.17.0 | K | 6 (K1-K6) | ~2000 | W9+ |
-| **合计** | | **37** | **~10250** | **12+ 周** |
+| **合计** | | **37** | **~10700** | **12+ 周** |
 
 ---
 

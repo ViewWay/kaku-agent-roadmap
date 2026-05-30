@@ -48,3 +48,6 @@ Kaku 的根本差异化是唯一将 AI 深度嵌入终端的产品。
 3. **子代理完整生命周期** — 不只是 fork，包含角色/通信/隔离/心跳/transcript/聚合
 4. **扩展性对标 Claude Code** — Hook 22 事件 + 5 种类型，MCP 完整协议层
 5. **终端优势最大化** — 多 Tab 协作、命令流监控、内联 Diff、智能建议
+6. **MCP 迁移到官方 RMCP SDK** — 替换自建 304 LOC 实现，获得完整协议支持 (HTTP/OAuth/Sampling)
+7. **终端方案 W9 评估** — WezTerm (2年未更新) 风险待观察，Phase J 时决策继续/迁移/自研
+8. **Warp Oz 轻量互操作** — 通过 MCP Server 标准协议对接，不深度绑定 Warp 平台
