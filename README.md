@@ -33,6 +33,7 @@ Kaku AI Agent 引擎增强计划 — 基于 5 个顶级 AI Coding Agent 源码�
 - [Claude Code 变更记录](docs/claude-code-changelog-v2.md) — v2.0.1→v2.1.156 变更
 - [Hermes Agent 分析](docs/hermes-agent-analysis.md) — 核心模式和移植建议
 - [Kaku 架构约束](docs/kaku-agent-constraints.md) — 当前架构瓶颈
+- [终端+Agent 工作流设计](docs/terminal-agent-design.md) — 自研终端架构、AI Agent 开发工作流交互设计
 
 ## 核心策略
 
