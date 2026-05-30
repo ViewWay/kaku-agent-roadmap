@@ -4,7 +4,16 @@
 
 基于 5 个 AI Coding Agent 项目源码深度分析 (Kaku, Hermes, Claude Code v2.0.2 fork + v2.1.156 CHANGELOG, OpenAI Codex)，制定 Kaku Agent 引擎增强路线图。
 
-当前版本 `0.11.0`，有 7 个未提交 WIP 工具模块。发布策略: 每 Phase 一个版本。总预估 37 任务, ~10250 LOC, 12+ 周。
+当前版本 `0.11.0`，有 7 个未提交 WIP 工具模块。发布策略: 每 Phase 一个版本。总预估 37 任务, ~10700 LOC, 12+ 周。
+
+### 相关设计文档
+
+- [终端+Agent 工作流设计](docs/terminal-agent-design.md) — 自研终端架构、AI Agent 开发工作流交互设计、Phase 0 终端 MVP (~17800 LOC)
+- [多平台产品架构](docs/multiplatform-design.md) — Core/Shell/Interface 三层分离、全平台 UI、LLM 多 Provider 策略
+
+### 终端策略说明
+
+本路线图的 Agent 引擎任务 (G1-K) 与终端选择解耦。当前基于 WezTerm 实现，J 阶段任务中的终端渲染/API 引用以 WezTerm 为例，W9 决策节点后可能迁移到 Ghostty 或自研终端。完整的自研终端设计见 [terminal-agent-design.md](docs/terminal-agent-design.md)，多平台架构见 [multiplatform-design.md](docs/multiplatform-design.md)。
 
 ---
 

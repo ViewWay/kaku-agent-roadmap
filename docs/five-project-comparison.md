@@ -193,18 +193,22 @@ Kaku 的根本差异化不是"又一个 CLI Agent"，而是**唯一将 AI 深度
 - 和 Codex 比企业沙箱安全 (对手有 4 平台隔离 + 密码学身份)
 - 和 Hermes 比工具数量 (对手有 75+ 工具 + 18 平台适配器)
 - 做一个"又一个 CLI Agent"
+- 自研大模型 (调用智谱/OpenAI/Anthropic/Grok/Gemini/DeepSeek/OpenRouter/本地模型)
 
 **Kaku 应该**:
 - **放大"终端即 AI 工作站"定位** — 这是所有竞品都没有的
 - **让 Agent 拥有终端感知能力** — 读取 shell 状态、观察命令输出、理解终端布局
-- **利用 WezTerm 的渲染能力** — 富文本 diff 预览、内联编辑、可视化计划
+- **自研终端渲染引擎** — GPU 加速 (wgpu)，富文本 diff 预览、内联编辑、可视化计划
+- **全平台覆盖** — Terminal/Web/Mobile/IDE/CLI 共享 Agent 引擎
+- **LLM 多 Provider** — 不绑定单一模型供应商，用户自由切换
 - **从终端出发构建 AI 体验** — 而非在终端中塞入一个独立 AI
 
 **出圈路径**:
 1. 先在 Rust 终端 Agent 领域建立技术领先 (Phase G)
 2. 再展示终端内嵌 AI 的独特体验 (Phase J)
 3. 然后建立生态 (Phase H-I)
-4. 最终成为"AI 原生终端"品类定义者
+4. 扩展到全平台 (Web/Mobile/IDE)
+5. 最终成为"AI 原生终端"品类定义者
 
 ## 相关记忆
 [[kaku-agent-constraints]] — Kaku 当前架构约束
